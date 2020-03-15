@@ -63,17 +63,17 @@ function StyledRadio(props) {
   );
 }
 
-export default function CustomizedRadios() {
-  const [value, setValue] = React.useState('female');
+export default function EthernetDNSRadioButtons() {
+  const [value, setValue] = React.useState('auto-dns-settings');
 
   const handleChange = event => {
     setValue(event.target.value);
   };
   return (
     <FormControl component="fieldset">
-      <RadioGroup defaultValue="auto-ip-settings" name="customized-radios" value={value} onChange={handleChange}>
-        <FormControlLabel value="auto-ip-settings" control={<StyledRadio />} label="Obtain an IP address automatically (DHCP/BootP)" />
-        <FormControlLabel value="custom-ip-settings" control={<StyledRadio />} label="Use the following IP address:" />
+      <RadioGroup defaultValue="auto-dns-settings" name="customized-radios" value={value} onChange={handleChange}>
+        <FormControlLabel value="auto-dns-settings" control={<StyledRadio />} label="Obtain DNS server address automatically" />
+        <FormControlLabel value="custom-dns-settings" control={<StyledRadio />} label="Use the following DS server address:" />
       </RadioGroup>
     </FormControl>
   );
