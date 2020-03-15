@@ -1,11 +1,26 @@
 import React, { useState } from 'react';
-import { FormControl, InputLabel, Input } from '@material-ui/core';
+import { TextField } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
+
+import CustomizedRadios from './radioButtons';
 
 const useStyles = makeStyles({
   form: {
+    width: '80%',
+    margin: '0 auto',
+    padding: '0 10px',
     border: '1px solid black',
-  }
+    '& p': {
+      margin: 0,
+      fontSize: '16px',
+      fontWeight: 'bold',
+    },
+  },
+  ethernetSettingsWrapper: {
+    width: '50%',
+    padding: '10px 0',
+    borderRight: '1px solid black',
+  },
 });
 
 const Form = (props) => {
@@ -18,16 +33,17 @@ const Form = (props) => {
 
   const [autoEthernetSettings, setEthernetSettings] = useState(getEthernetSettings());
 
-  const classes = useStyles();
+  const handleChange = (e) => {
+    console.log(e);
+  }
 
+  const classes = useStyles();
   return (
     <form className={classes.form}>
-      <div>
+      <div className={classes.ethernetSettingsWrapper}>
         <p>Ethernet Settings</p>
-        <FormControl>
-          <InputLabel htmlFor="my-input">Email address</InputLabel>
-          <Input id="my-input" />
-        </FormControl>
+        <CustomizedRadios onClick={handleChange} />
+        <TextField id="outlined-basic" variant="outlined" />
       </div>
     </form>
   );
