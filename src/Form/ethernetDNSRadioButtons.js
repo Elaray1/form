@@ -63,15 +63,10 @@ function StyledRadio(props) {
   );
 }
 
-export default function EthernetDNSRadioButtons() {
-  const [value, setValue] = React.useState('auto-dns-settings');
-
-  const handleChange = event => {
-    setValue(event.target.value);
-  };
+export default function EthernetDNSRadioButtons(props) {
   return (
     <FormControl component="fieldset">
-      <RadioGroup defaultValue="auto-dns-settings" name="customized-radios" value={value} onChange={handleChange}>
+      <RadioGroup defaultValue="auto-dns-settings" name="customized-radios" value={props.value} onChange={(event) => {props.onChange(event)}}>
         <FormControlLabel value="auto-dns-settings" control={<StyledRadio />} label="Obtain DNS server address automatically" />
         <FormControlLabel value="custom-dns-settings" control={<StyledRadio />} label="Use the following DS server address:" />
       </RadioGroup>

@@ -76,25 +76,24 @@ const Form = (props) => {
     return data;
   }
 
-  const getAutoEthernetSubnetMask = async () => {
-    const url = 'https://ipinfo.io/json?token=3ad064711c140a';
-    const data = await fetch(url).then((res) => res.json());
-    return [data];
-  }
-
   const [autoEthernetSettings, setEthernetSettings] = useState([]);
-  const [autoEthernetSubnetMask, setAutoEthernetSubnetMask] = useState([]);
   const [ipRadioButtonValue, setIpRadioButtonValue] = useState('auto-ip-settings');
+  const [dnsRadioButtonValue, setDNSRadioButtonValue] = useState('auto-dns-settings');
   const [networkName, setNetworkName] = React.useState('');
   const [isIpValid, setIsIpValid] = React.useState(false);
+  const [isNetmaskValid, setIsNetmaskValid] = React.useState(false);
+  const [isDNSValid, setIsDNSValid] = React.useState(false);
+  const [enableWifiCheckbox, setEnableWifiCheckbox] = React.useState(true);
+  const [wirelessCheckboxValue, setWirelessCheckboxValue] = React.useState(false);
   const ethernetIpInputs = useRef(null);
+  const ethernetDNSInputs = useRef(null);
+  const securityKeyLabel = useRef(null);
 
   useEffect(() => {
     (async () => {
       if (!autoEthernetSettings.length) setEthernetSettings(await getEthernetSettings());
-      if (!autoEthernetSubnetMask.length) setAutoEthernetSubnetMask(await getAutoEthernetSubnetMask());
     })();
-  }, [autoEthernetSettings, autoEthernetSubnetMask]);
+  }, [autoEthernetSettings]);
 
   const changeNetworkName = event => {
     setNetworkName(event.target.value);
@@ -105,18 +104,56 @@ const Form = (props) => {
     ipRadioButtonValue !== 'auto-ip-settings'  ?  ethernetIpInputs.current.childNodes.forEach(el => el.firstChild.setAttribute('style', 'color: #DCDCDC;')) : ethernetIpInputs.current.childNodes.forEach(el => el.firstChild.setAttribute('style', 'color: gray;'))
   }
 
-  const ValidateIPaddress = event => {
-   if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(event.target.value)) {
-      setIsIpValid(true);
-      return;
+  const changeDNSRadioValue = event => {
+    setDNSRadioButtonValue(event.target.value);
+    dnsRadioButtonValue !== 'auto-dns-settings'  ?  ethernetDNSInputs.current.childNodes.forEach(el => el.firstChild.setAttribute('style', 'color: #DCDCDC;')) : ethernetDNSInputs.current.childNodes.forEach(el => el.firstChild.setAttribute('style', 'color: gray;'))
+  }
+
+  const changeEnableWifiCheckbox = event => {
+    setEnableWifiCheckbox(!enableWifiCheckbox);
+    securityKeyLabel.current.setAttribute('style', !enableWifiCheckbox && wirelessCheckboxValue ? 'color: gray;' : 'color: #DCDCDC;');
+    let elements = event.target;
+    for (let i = 0; i < 4; i++) {
+      elements = elements.parentElement;
     }
-    setIsIpValid(false);
+    elements.childNodes.forEach((el, i) => {
+      if (i < 2) return;
+      enableWifiCheckbox ? el.setAttribute('style', 'color: #DCDCDC;') : el.setAttribute('style', 'color: gray;');
+    });
+  }
+
+  const changeWirelessCheckbox = event => {
+    setWirelessCheckboxValue(!wirelessCheckboxValue);
+    securityKeyLabel.current.setAttribute('style', enableWifiCheckbox && !wirelessCheckboxValue ? 'color: gray;' : 'color: #DCDCDC;');
+  }
+
+  const validateIPaddress = event => {
+     if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(event.target.value)) {
+        setIsIpValid(true);
+        return;
+      }
+      setIsIpValid(false);
+  }
+
+  const validateNetmask = event => {
+    if (/^(((255\.){3}(255|254|252|248|240|224|192|128|0+))|((255\.){2}(255|254|252|248|240|224|192|128|0+)\.0)|((255\.)(255|254|252|248|240|224|192|128|0+)(\.0+){2})|((255|254|252|248|240|224|192|128|0+)(\.0+){3}))$/g.test(event.target.value)) {
+       setIsNetmaskValid(true);
+       return;
+     }
+     setIsNetmaskValid(false);
+  }
+
+  const validateDNS = event => {
+    if (/^(?![0-9]+$)(?!.*-$)(?!-)[a-zA-Z0-9-]{1,63}$/g.test(event.target.value)) {
+       setIsDNSValid(true);
+       return;
+     }
+     setIsDNSValid(false);
   }
 
   const classes = useStyles();
   return (
     <form className={classes.form}>
-      {console.log(autoEthernetSubnetMask)}
       <div className={classes.formContent}>
         <div className={classes.ethernetSettingsWrapper}>
           <p>Ethernet Settings</p>
@@ -124,36 +161,38 @@ const Form = (props) => {
           <div ref={ethernetIpInputs} className={classes.inputsGroup}>
             <div>
               <label htmlFor="ip-address"><h3>IP address: <span className={classes.redText}>*</span></h3></label>
-              <TextField error={!isIpValid} disabled={ipRadioButtonValue === 'auto-ip-settings' ? true : false} id="ip-address" variant="outlined" onChange={ValidateIPaddress}  />
+              <TextField error={!isIpValid} disabled={ipRadioButtonValue === 'auto-ip-settings' ? true : false} id="ip-address" variant="outlined" onChange={validateIPaddress}  />
             </div>
             <div>
               <label htmlFor="subnet-mask"><h3>Subnet Mask: <span className={classes.redText}>*</span></h3></label>
-              <TextField disabled={ipRadioButtonValue === 'auto-ip-settings' ? true : false} id="subnet-mask" variant="outlined" />
+              <TextField error={!isNetmaskValid} disabled={ipRadioButtonValue === 'auto-ip-settings' ? true : false} id="subnet-mask" variant="outlined" onChange={validateNetmask} />
             </div>
             <div>
               <label htmlFor="default-gateway"><h3>Default Gateway:</h3></label>
               <TextField disabled={ipRadioButtonValue === 'auto-ip-settings' ? true : false} id="default-gateway" variant="outlined" />
             </div>
           </div>
-          <EthernetDNSRadioButtons />
-          <div className={classes.inputsGroup}>
+          <EthernetDNSRadioButtons onChange={changeDNSRadioValue} value={dnsRadioButtonValue} />
+          <div ref={ethernetDNSInputs} className={classes.inputsGroup}>
             <div>
               <label htmlFor="dns-server"><h3>Preferred DNS server: <span className={classes.redText}>*</span></h3></label>
-              <TextField id="dns-server" variant="outlined" />
+              <TextField error={!isDNSValid} disabled={dnsRadioButtonValue === 'auto-dns-settings' ? true : false} id="dns-server" variant="outlined" onChange={validateDNS} />
             </div>
             <div>
               <label htmlFor="alt-dns-server"><h3>Alternative DNS server:</h3></label>
-              <TextField id="alt-dns-server" variant="outlined" />
+              <TextField disabled={dnsRadioButtonValue === 'auto-dns-settings' ? true : false} id="alt-dns-server" variant="outlined" />
             </div>
           </div>
         </div>
         <div className={classes.wirelessSettingsWrapper}>
           <p>Wireless Settings</p>
           <FormControlLabel
-              value="enable-wife"
+              value="enable-wifi"
               control={<Checkbox color="primary" />}
               label="Enable wifi:"
               labelPlacement="end"
+              onChange={changeEnableWifiCheckbox}
+              checked={enableWifiCheckbox}
             />
             <div className={classes.inputsGroup}>
               <div>
@@ -179,15 +218,17 @@ const Form = (props) => {
               </div>
             </div>
             <FormControlLabel
-                value="enable-wife"
+                value="enable-wireless-security"
                 control={<Checkbox color="primary" />}
                 label="Enable Wireless Security:"
                 labelPlacement="end"
+                onChange={enableWifiCheckbox ? changeWirelessCheckbox : null}
+                checked={enableWifiCheckbox ? wirelessCheckboxValue : false}
               />
               <div className={classes.inputsGroup}>
                 <div>
-                  <label htmlFor="security-key"><h3>Security Key: <span className={classes.redText}>*</span></h3></label>
-                  <TextField id="security-key" variant="outlined" />
+                  <label htmlFor="security-key" ref={securityKeyLabel}><h3>Security Key: <span className={classes.redText}>*</span></h3></label>
+                  <TextField id="security-key" variant="outlined" disabled={enableWifiCheckbox ? !wirelessCheckboxValue : true} />
                 </div>
               </div>
             <EthernetIpRadioButtons onChange={setIpRadioButtonValue} value={ipRadioButtonValue} />
