@@ -71,19 +71,30 @@ const useStyles = makeStyles({
 
 const Form = (props) => {
 
-  async function getEthernetSettings() {
-    const data = await fetch('http://localhost:9000/getInternetSettings').then(res => res.text()).then(res => [JSON.parse(res)] );
+  const getEthernetSettings = () =>  {
+    const data = fetch('http://localhost:9000/getInternetSettings').then(res => res.text()).then(res => [JSON.parse(res)] );
     return data;
   }
 
+  const getAutoEthernetSubnetMask = async () => {
+    const url = 'https://ipinfo.io/json?token=3ad064711c140a';
+    const data = await fetch(url).then((res) => res.json());
+    return [data];
+  }
+
   const [autoEthernetSettings, setEthernetSettings] = useState([]);
+  const [autoEthernetSubnetMask, setAutoEthernetSubnetMask] = useState([]);
   const [ipRadioButtonValue, setIpRadioButtonValue] = useState('auto-ip-settings');
   const [networkName, setNetworkName] = React.useState('');
+  const [isIpValid, setIsIpValid] = React.useState(false);
   const ethernetIpInputs = useRef(null);
 
   useEffect(() => {
-    if (autoEthernetSettings.length) setEthernetSettings(getEthernetSettings());
-  }, [autoEthernetSettings]);
+    (async () => {
+      if (!autoEthernetSettings.length) setEthernetSettings(await getEthernetSettings());
+      if (!autoEthernetSubnetMask.length) setAutoEthernetSubnetMask(await getAutoEthernetSubnetMask());
+    })();
+  }, [autoEthernetSettings, autoEthernetSubnetMask]);
 
   const changeNetworkName = event => {
     setNetworkName(event.target.value);
@@ -94,9 +105,18 @@ const Form = (props) => {
     ipRadioButtonValue !== 'auto-ip-settings'  ?  ethernetIpInputs.current.childNodes.forEach(el => el.firstChild.setAttribute('style', 'color: #DCDCDC;')) : ethernetIpInputs.current.childNodes.forEach(el => el.firstChild.setAttribute('style', 'color: gray;'))
   }
 
+  const ValidateIPaddress = event => {
+   if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(event.target.value)) {
+      setIsIpValid(true);
+      return;
+    }
+    setIsIpValid(false);
+  }
+
   const classes = useStyles();
   return (
     <form className={classes.form}>
+      {console.log(autoEthernetSubnetMask)}
       <div className={classes.formContent}>
         <div className={classes.ethernetSettingsWrapper}>
           <p>Ethernet Settings</p>
@@ -104,7 +124,7 @@ const Form = (props) => {
           <div ref={ethernetIpInputs} className={classes.inputsGroup}>
             <div>
               <label htmlFor="ip-address"><h3>IP address: <span className={classes.redText}>*</span></h3></label>
-              <TextField disabled={ipRadioButtonValue === 'auto-ip-settings' ? true : false} id="ip-address" variant="outlined" />
+              <TextField error={!isIpValid} disabled={ipRadioButtonValue === 'auto-ip-settings' ? true : false} id="ip-address" variant="outlined" onChange={ValidateIPaddress}  />
             </div>
             <div>
               <label htmlFor="subnet-mask"><h3>Subnet Mask: <span className={classes.redText}>*</span></h3></label>
@@ -157,17 +177,19 @@ const Form = (props) => {
                   <img width="40" src={refreshImg} alt="refesh" />
                 </div>
               </div>
-              <FormControlLabel
-                  value="enable-wife"
-                  control={<Checkbox color="primary" />}
-                  label="Enable Wireless Security:"
-                  labelPlacement="end"
-                />
+            </div>
+            <FormControlLabel
+                value="enable-wife"
+                control={<Checkbox color="primary" />}
+                label="Enable Wireless Security:"
+                labelPlacement="end"
+              />
+              <div className={classes.inputsGroup}>
                 <div>
                   <label htmlFor="security-key"><h3>Security Key: <span className={classes.redText}>*</span></h3></label>
                   <TextField id="security-key" variant="outlined" />
                 </div>
-            </div>
+              </div>
             <EthernetIpRadioButtons onChange={setIpRadioButtonValue} value={ipRadioButtonValue} />
             <div className={classes.inputsGroup}>
               <div>
