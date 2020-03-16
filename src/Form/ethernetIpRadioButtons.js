@@ -66,7 +66,7 @@ function StyledRadio(props) {
 export default function EthernetIpRadioButtons(props) {
   return (
     <FormControl component="fieldset">
-      <RadioGroup defaultValue="auto-ip-settings" name="customized-radios" value={props.value} onChange={(event) => {props.onChange(event.target.value)}}>
+      <RadioGroup defaultValue="auto-ip-settings" name="customized-radios" value={props.value} onChange={(event) => {props.onChange(event)}}>
         <FormControlLabel value="auto-ip-settings" control={<StyledRadio />} label="Obtain an IP address automatically (DHCP/BootP)" />
         <FormControlLabel value="custom-ip-settings" control={<StyledRadio />} label="Use the following IP address:" />
       </RadioGroup>
