@@ -72,8 +72,8 @@ export default function WirelessDNSRadioButtons(props) {
   return (
     <FormControl component="fieldset">
       <RadioGroup defaultValue="wireless-auto-dns-settings" name="customized-radios" value={props.value} onChange={props.onChange ? handleChange : null}>
-        <FormControlLabel value="wireless-auto-dns-settings" control={<StyledRadio />} label="Obtain an IP address automatically (DHCP/BootP)" />
-        <FormControlLabel value="wireless-custom-dns-settings" control={<StyledRadio />} label="Use the following IP address:" />
+        <FormControlLabel value="wireless-auto-dns-settings" control={<StyledRadio />} label="Obtain DNS server address automatically" />
+        <FormControlLabel value="wireless-custom-dns-settings" control={<StyledRadio />} label="Use the following DS server address:" />
       </RadioGroup>
     </FormControl>
   );
