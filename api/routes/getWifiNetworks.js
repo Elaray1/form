@@ -2,7 +2,16 @@ const express = require('express');
 const router = express.Router();
 var wifi = require("node-wifi");
 
-let avaibleWifiNetworks = [];
+let avaibleWifiNetworks = [
+  {
+    ssid: 'Network1',
+    security: 'WPA WPA2'
+  },
+  {
+    ssid: 'Network2',
+    security: 'WPA WPA2',
+  }
+];
 
 // Initialize wifi module
 // Absolutely necessary even to set interface to null
@@ -12,7 +21,7 @@ wifi.init({
 
 // Scan networks
 wifi.scan(function(err, networks) {
-    avaibleWifiNetworks = networks;
+    if (networks.length) avaibleWifiNetworks = networks;
     /*
         networks = [
             {

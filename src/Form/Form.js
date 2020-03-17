@@ -34,6 +34,7 @@ const useStyles = makeStyles({
       display: 'flex',
       justifyContent: 'flex-end',
       margin: '10px 0',
+      fontSize: '14px'
     },
     '& > div > div': {
       width: '57%',
@@ -62,7 +63,8 @@ const useStyles = makeStyles({
     margin: 'auto 10px',
   },
   formButton: {
-    borderRadius: '20%',
+    width: '130px',
+    borderRadius: '43px',
     marginRight: '20px'
   },
   formButtonsWrapper: {
@@ -79,13 +81,18 @@ const Form = (props) => {
   }
 
   const getWifiNetworks = async () => {
-    const data = await fetch('http://localhost:9000/getWifiNetworks').then(res => res.text()).then(res => res);
+    const data = await fetch('http://localhost:9000/getWifiNetworks').then(res => res.text()).then(res => JSON.parse(res));
     return data;
   }
 
-  (async () => {console.log(await getWifiNetworks())})()
+  const getDNSInfo = async () => {
+    const data = await fetch('http://localhost:9000/getDNSInfo').then(res => res.text()).then(res => [JSON.parse(res)]);
+    return data;
+  }
 
   const [autoEthernetSettings, setEthernetSettings] = useState([]);
+  const [avaibleWifiNetworks, setAvaibleWifiNetworks] = useState([]);
+  const [dnsInfo, setDNSInfo] = useState([]);
   const [ipRadioButtonValue, setIpRadioButtonValue] = useState('auto-ip-settings');
   const [wirelessIpRadioButtonValue, setWirelessIpRadioButtonValue] = useState('wireless-auto-ip-settings');
   const [dnsRadioButtonValue, setDNSRadioButtonValue] = useState('auto-dns-settings');
@@ -108,8 +115,10 @@ const Form = (props) => {
   useEffect(() => {
     (async () => {
       if (!autoEthernetSettings.length) setEthernetSettings(await getEthernetSettings());
+      if (!avaibleWifiNetworks.length) setAvaibleWifiNetworks(await getWifiNetworks());
+      if (!dnsInfo.length) setDNSInfo(await getDNSInfo());
     })();
-  }, [autoEthernetSettings]);
+  }, [autoEthernetSettings, avaibleWifiNetworks, dnsInfo]);
 
   const changeNetworkName = event => {
     setNetworkName(event.target.value);
@@ -159,6 +168,12 @@ const Form = (props) => {
     securityKeyLabel.current.setAttribute('style', enableWifiCheckbox && !wirelessCheckboxValue ? 'color: gray;' : 'color: #DCDCDC;');
   }
 
+  const refreshAvaibleNetworks = () => {
+    (async () => {
+      setAvaibleWifiNetworks(await getWifiNetworks())
+    })()
+  }
+
   const validateIPaddress = event => {
      if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(event.target.value)) {
         setIsIpValid(true);
@@ -205,6 +220,71 @@ const Form = (props) => {
        return;
      }
      setIsWirelessDNSValid(false);
+  }
+
+  const sendFormData = () => {
+    let isEthernetIpAutoSettings = true;
+    let isEthernetDNSAutoSettings = true;
+    let isWirelessIpAutoSettings = true;
+    let isWirelessDNSAutoSettings = true;
+    if (ipRadioButtonValue !== 'auto-ip-settings') {
+      isEthernetIpAutoSettings = false;
+      if (!isIpValid || !isNetmaskValid) {
+        alert('Incorrect Ethernet IP settings');
+        return;
+      }
+    }
+    if (dnsRadioButtonValue !== 'auto-dns-settings') {
+      isEthernetDNSAutoSettings = false;
+      if (!isDNSValid) {
+        alert('Incorrect Ethernet DNS settings');
+        return;
+      }
+    }
+    if (enableWifiCheckbox) {
+      if (!networkName) {
+        alert('Incorrect Wireless Network name');
+        return;
+      }
+      if (wirelessCheckboxValue) {
+        if (!securityKeyLabel.current.nextElementSibling.firstElementChild.firstElementChild.value) {
+          alert('Create security key');
+          return;
+        }
+      }
+      if (wirelessIpRadioButtonValue !== 'wireless-auto-ip-settings') {
+        isWirelessIpAutoSettings = false;
+        if (!isWirelessIpValid || !isWirelessNetmaskValid) {
+          alert('Incorrect Wireless IP settings');
+          return;
+        }
+      }
+      if (wirelessDNSRadioButtonValue !== 'wireless-auto-dns-settings') {
+        isWirelessDNSAutoSettings = false;
+        if (!isWirelessDNSValid) {
+          alert('Incorrect Wireless DNS settings');
+          return;
+        }
+      }
+    }
+    console.log({
+      ethernetSettings: {
+        ipAddress: isEthernetIpAutoSettings ? autoEthernetSettings[0].ip_address : document.getElementById('ip-address').value,
+        subnetMask: isEthernetIpAutoSettings ? autoEthernetSettings[0].netmask : document.getElementById('subnet-mask').value,
+        defaultGateway: isEthernetIpAutoSettings ? autoEthernetSettings[0].gateway_ip : document.getElementById('default-gateway').value,
+        dnsServer: isEthernetDNSAutoSettings ? dnsInfo[0].byTypes[0].type : document.getElementById('dns-server').value,
+        altDNSServer: isEthernetDNSAutoSettings ? dnsInfo[0].byTypes[1].type : document.getElementById('alt-dns-server').value,
+      },
+      wirelessSettingss: !enableWifiCheckbox ? null : {
+        networkName: networkName,
+        securityKey: wirelessCheckboxValue ? document.getElementById('security-key').value : null,
+        ipAddress: isWirelessIpAutoSettings ? autoEthernetSettings[0].ip_address : document.getElementById('wireless-ip-address').value,
+        subnetMask: isWirelessIpAutoSettings ? autoEthernetSettings[0].netmask : document.getElementById('wireless-subnet-mask').value,
+        defaultGateway: isWirelessIpAutoSettings ? autoEthernetSettings[0].gateway_ip : document.getElementById('wireless-default-gateway').value,
+        dnsServer: isWirelessDNSAutoSettings ? dnsInfo[0].byTypes[0].type : document.getElementById('wireless-dns-server').value,
+        altDNSServer: isWirelessDNSAutoSettings ? dnsInfo[0].byTypes[1].type : document.getElementById('wireless-alt-dns-server').value,
+      }
+    });
   }
 
   const classes = useStyles();
@@ -263,12 +343,10 @@ const Form = (props) => {
                     value={networkName}
                     onChange={changeNetworkName}
                   >
-                    <MenuItem value={10}>Ten</MenuItem>
-                    <MenuItem value={20}>Twenty</MenuItem>
-                    <MenuItem value={30}>Thirty</MenuItem>
+                  {avaibleWifiNetworks.map((obj, i) => <MenuItem value={obj.ssid} key={obj.ssid}>{obj.ssid}</MenuItem>)}
                   </Select>
                 </FormControl>
-                <div className={classes.refreshBtn} >
+                <div className={classes.refreshBtn} onClick={refreshAvaibleNetworks} >
                   <img width="40" src={refreshImg} alt="refesh" />
                 </div>
               </div>
@@ -316,11 +394,11 @@ const Form = (props) => {
         </div>
       </div>
       <div className={classes.formButtonsWrapper}>
-        <Button className={classes.formButton} variant="contained" color="primary">
-          Primary
+        <Button onClick={sendFormData} className={classes.formButton} style={{ backgroundColor: '#137cbd' }} variant="contained" color="primary">
+          Save
         </Button>
         <Button className={classes.formButton} variant="outlined" color="primary">
-          Primary
+          Cancel
         </Button>
       </div>
     </form>
